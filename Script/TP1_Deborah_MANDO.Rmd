@@ -1,0 +1,427 @@
+---
+output:
+  pdf_document:
+    keep_tex: yes
+    fig_caption: yes
+    toc: no
+  word_document: default
+  html_document:
+    df_print: paged
+outp ut:
+  pdf_document:
+    toc: yes
+    fig_caption: yes
+    toc_depth: 4
+header-includes: 
+  - \usepackage{pdfpages}
+  - \usepackage{graphicx}
+---
+
+\includepdf{projetv.pdf}
+
+```{=tex}
+\thispagestyle{empty}
+\newpage
+```
+```{=tex}
+\setcounter{tocdepth}{4}                
+\renewcommand{\contentsname}{\textcolor{blue}{Sommaire}}
+```
+\textcolor{blue}{\tableofcontents} \newpage
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+
+```
+
+
+# Résumé
+
+L’objectif de ce projet est que vous appliquiez les outils que vous avez étudiés dans le cours du logiciel statistique R, dans le cas d’une étude de cas réelle. Le TP est à faire seul et à rendre au format .html ou .pdf. Les codes que vous utiliserez pour répondre aux questions seront à intégrer dans le corps de votre rapport. C’est pourquoi l’utilisation de R Markdown est à privilégier, mais vous pouvez également utiliser d’autres éditeurs de textes. . . En ce qui concerne l’organisation du travail à rendre, vous vous inspirerez de la façon dont est organisé le sujet du projet (vous n’êtes pas obliger de recopier l’énoncé). Le barème est indiqué en face de chaque question. Il tient compte du code proposé et dans le cas où nous vous demandons de faire des commentaires sur les résultats obtenus, nous tiendrons compte des commentaires que vous aurez fait dans la notation
+
+# Objectif de l’étude
+
+Cette enquête vise à identifier et à caractériser des bioénergies durables pour les petites et moyennes entreprises (PME) agroalimentaires d’Afrique de l’Ouest.
+
+# 1	Préparation des données
+
+## 1.1 Description
+
+## 1.2	Importation et mise en forme 
+
+### 1.2.1	Importer la base de données dans un objet de type data.frame nommé projet
+
+```{r}
+#Importer la base de donnée dans un objet de type data:frame nommé key
+# appel de la fonction read_xlsx
+library(readxl)
+#Importer la base et la nommer projet
+projet <- read_xlsx("Base_Projet.xlsx")
+
+```
+
+### 1.2.2 Donner le nombre de lignes (i.e. le nombre de PME) et colonnes (i.e. nombre de variables) de la base projet
+
+```{r}
+#le nombre de lignes de la base projet 
+nrow(projet)
+```
+```{r}
+#le nombre de colonnes de la base projet
+ncol(projet)
+```
+
+### 1.2.3 Prise de connaissance avec la base
+
+Le nombre de lignes de la base projet est 250 soit 250 PME et le nombre de colonnes de la base projet est 33 soit 33 variables 
+
+### 1.2.4	Vérifier s’il y a des valeurs manquantes pour la variable key dans la base projet. Si oui, identifier la (ou les) PME concernée(s).
+
+```{r}
+# verifier si il ya des valeurs manquantes pour la variable key dans la base projet
+which(is.na(projet$key),arr.ind=TRUE)
+```
+
+### 1.2.5 Il n'ya pas de valeurs manquantes pour la variable key dans la base projet
+
+## 1.3	Création de variables 
+
+### 1.3.1	Rénommer la variable q1 en region
+
+```{r}
+# appel du package permettant d'avoir la fonction rename pour renommer une variable
+library(dplyr)
+# Renommer la variable q1 en region
+projet=projet %>% rename(region=q1)
+```
+
+### 1.3.2 Rénommer la variable q2 en departement
+
+```{r}
+# appel du package dplyr permettant d'avoir la fonction rename pour renommer une variable
+library(dplyr)
+# Renommer la variable q2 en departement
+projet=projet %>% rename(departement=q2)
+```
+
+### 1.3.3 	Rénommer la variable q23 en sexe
+
+```{r}
+# appel du package permettant d'avoir la fonction rename pour renommer une variable
+library(dplyr)
+# Renommer la variable q23 en sexe
+projet=projet %>% rename(sexe=q23) 
+```
+
+### 1.3.3 Créer la variable sexe_2 qui vaut 1 si sexe égale à Femme et 0 sinon.
+
+```{r}
+# appel du package permettant d'avoir la fonction recode pour modifier et reorganiser  
+library(dplyr)
+#creer/ajouter une nouvelle variable àla base à partir de la variable sexe existante
+projet=projet %>% mutate(sexe_2 = sexe )
+#recodage de la variable sexe_2
+projet["sexe_2"]= dplyr::recode(projet$sexe_2,"Femme"=1,"Homme"=0)
+#View(projet)
+```
+
+###	1.3.4 Création de la variable sexe_2 
+
+Pour repondre à cette question nous avons d'abord ajouter la variable sexe_2  à la base et en meme temps affecté la variable sexe à la variable sexe_2 à l'aide de la fonction mutate. Puis nous avons fais un recodage de la variable sexe_2 qui vaut 1 si sexe_2 égale à Femme et 0 sinon
+
+### 1.3.5	Créer un data.frame nommé langues qui prend les variables key et les variables correspondantes décrites plus haut.
+
+```{r}
+library(dplyr)
+#Création d' une variable qui regroupe toutes les variables commencant par "q24a_"
+Selection<-projet %>% select(starts_with("q24a_"))
+attach(projet)
+#Création d'un data.frame nommé langues
+langues<-data.frame(key,Selection)
+```
+
+### 1.3.6 Création d' un data.frame nommé langues
+ 
+A ce niveau data.frame nommé langues devait prendre les variables key et les variables correspondantes décrites plus haut.
+Comme nous avons remarquer que ces variables commencent par q24a_, nous avons d'abord sélectionner toutes les variables commencant par "q24a_" que nous avons nommé sélection.Ensuite, nous avons créer un data.frame prenant les variables key et sélection que nous avons nommé langues. 
+
+### 1.3.7	Créer une variable parle qui est égale au nombre de langue parlée par le dirigeant de la PME.
+
+```{r}
+#Creation d'une variable nommée parle
+library(dplyr)
+ 
+#parle egale à le nombre de langues parlées par le dirigeant de la PME
+attach(projet)
+projet<-projet %>% mutate(parle=rowSums(across(starts_with("q24a_"))))
+#projet
+```
+
+###	1.3.8 Création d'une variable parle 
+
+la variable correspond au nombre de toutes les variables commencant par "q24a_".Pour repondre à la question, nous avons ajouter la variable par grace à la fonction mutate et pour que les  valeurs lignes correspondent à la somme de nombre de langues parlées par le dirigeant de la PME, toutes les variables commencant par "q24a_" la base sont considés car elles representent la plage de langues parlées possible d'un dirigeant de la PME; c'est la fonction rowSums qui nous a permis de le faire.
+
+### 1.3.9 Sélectionnez uniquement les variables key et parle, l’objet de retour sera langues.
+
+```{r}
+#	Sélection des variables key et parle dont l’objet de retour sera langues.
+
+langues=projet %>% select(key,parle)
+```
+
+###	1.3.10 Sélection des variables key et parle dont l’objet de retour sera langues.
+
+Là, nous avons selectionner les deux variables key et parle à l'aide de la fonction select et pour que l’objet de retour soit langues, nous l'avons procédé à une affectation
+
+### 1.3.11	Merger les data.frame projet et langues
+
+```{r}
+# pour merger les data.frame projet et langues(joindre les deux)
+inner_join(projet,langues)
+```
+
+### 1.3.12 merger les data.frame projet et langues
+
+Pour merger les data.frame projet et langues( autrement dis,joindre les deux data:frames) nous avons choisis la fonction inner_join
+
+### 1.3.13 labellisation des variables
+
+```{r}
+#pour labelliser 
+library(expss)
+projet= expss::apply_labels(projet, q24="Age du dirigeant/responsable de la PME",
+	q24a_1= "le dirigeant/propriétaire de la PME parle le français",
+	q24a_2= "le dirigeant/propriétaire de la PME parle le wolof",
+  q24a_3= "le dirigeant/propriétaire de la PME parle le Diola",
+	q24a_4= "le dirigeant/propriétaire de la PME parle le Serere",
+	q24a_5= "le dirigeant/propriétaire de la PME parle le Peul",
+	q24a_6= "le dirigeant/propriétaire de la PME parle le Mandingue",
+	q24a_7= "le dirigeant/propriétaire de la PME parle le Balante",
+	q24a_9= "le dirigeant/propriétaire de la PME parle le Bambara",
+	q24a_10= "le dirigeant/propriétaire de la PME parle une autre langue",
+	q25= "Niveau d’instruction du dirigeant/responsable de la PME",
+	q26= "Nombre d’années d’experience professionnelle du dirigeant/responsable de la PME dans l’entreprise",
+	q12= "Statut juridique (SARL, SA, SUARL, GIE, Association, Groupement,)", q14b= "Autorisation de fabrication et de mise en vente (FRA)",
+	q16= "L’entreprise est-elle désservie par une route bitumée ?",
+	q17= "Etat de la route bitumée",
+	q19= "l’état de la piste qui mène à l’entreprise",
+	q20= "Avez-vous des associés dans l’entreprise",
+	filiere_1= "la PME est dans la filière arachide",
+	filiere_2= "la PME est dans la filière anacarde",
+	filiere_3= "la PME est dans la filière mangue" , filiere_4="la PME est dans la filière riz",
+	q8= "Activité principale de l’entreprise ",
+	q81=" propriétaire ou locataire",
+	gps_menlatitude=" coordonnées géographiques de la PME (latitude)",
+	gps_menlongitude= "coordonnées géographiques de la PME (longitude)",
+	submissiondate= "la date de soumission des informations de la PME",
+	start= "la date de début de l’enrégistrement des informations de la PME par l’enquêteur",
+	today= "la date de l’enquête"
+)
+```
+
+### 1.3.14 Pour labelliser
+
+Nous avons juger interessant de labéliser les variables de la base, juste pour avoir une vision claire sur les différentes variales de la base suivant la description fournie par l'etude.
+
+# 2	Analyses descriptives 
+
+## 2.1 Création d'une fonction univarie() pour des statistiques descriptives univariées
+
+
+```{r}
+# Analyses descriptives
+
+##création d'une fonction univarie() pour des statistiques descriptives univariées  pour ressortir un tableau de la repartition des PME suivant les différentes variables que j'aurai à renseigner
+
+## code de notre fonction univarie (fonction pour ressortir un tableau de repartition pour une variable de la base)
+ 
+attach(projet)
+
+tableau_repartition <- function(variable) {
+ni <- table(variable)
+effectif_total <- length(variable)
+fi <- ni / effectif_total * 100
+return(fi)
+
+}
+# présentation des differents tableau_repartition 
+
+tableau_repartition(projet$sexe)# pour sexe
+
+tableau_repartition(projet$q25)# pour le niveau d'instruction
+
+tableau_repartition(projet$q12)# pour statut juridique
+
+tableau_repartition(projet$q81) # pour le propriétaire/locataire
+
+```
+
+## 2.2 création d'une fonction univarie() pour des statistiques descriptives univariées
+
+A ce niveau, nous avons proposer deux fontion: une qui renvoie un tableau et l'autre un graphique
+
+## 2.3 Pour ressortir un tableau de  repartition des PME suivant les différentes variables que j'aurai à renseigner
+
+Pour que notre fonction soit le plus générale possible, nous avons choisis des appellations intuitives qui pourront guider un utilisateur donné qui voudrait utiliser notre fonction , la possibilité de la réutiliser sur d’autres jeux de données.
+Dabord, nous avons créer une fonction que nous avons nommé tableau_repartition par affectation.Cette fonction a été définie par la fonction function qui a pris comme argument"variable"qui est à renseigner lorsque on convoque notre fonction tableau_repartition.
+Comme description de la fonction: nous  avons d'abord présenter les effectifs(ni)à l'aide de la fonction table et nous l'avons réutiliser pour resortir les fréquences(fi) en appliquant effectif/effectif_total
+
+Pour ressortir un tableau de repartition pour une variable de la base on a à faire appel à la base par la fonction attach et convoquer notre fonction tableau_repartition() et introduire la variable en question comme argument de la fonction.
+
+A la fin nous faisons ressortir les tableaux de repartition des PME suivant les différentes variables:le sexe, le niveau d’instruction,le statut juridique,
+le propriétaire/locataire.
+ 
+
+```{r}
+##création d'une fonction univarie() pour des statistiques descriptives univariées  pour ressortir un grahique de la repartition des PME suivant les différentes variables que j'aurai à renseigner
+
+## code de notre fonction univarie pour ressortir un graphique de la repartition des PME suivant les différentes variables de la base que j'aurai à renseigner
+
+## code de notre fonction univarie (fonction pour ressortir un graphique )
+
+graphique <- function(variable) {
+ni <- table(variable)
+effectif_total <- length(variable)
+fi <- ni / effectif_total * 100
+creation_graphique<-barplot(fi, col = "blue", border = NA)
+return(creation_graphique)
+}
+
+# présentation des differents graphique 
+
+
+graphique(projet$sexe)# pour sexe
+
+graphique(projet$q25)# pour le niveau d'instruction
+
+graphique(projet$q12)# pour statut juridique
+
+graphique(projet$q81) # pour le propriétaire/locataire
+
+```
+
+## 2.4 Pour ressortir un graphique de  repartition des PME suivant les différentes variables que j'aurai à renseigner
+
+Pour que notre fonction soit le plus générale possible, nous avons choisis des appellations intuitives qui pourront guider un utilisateur donné qui voudrait utiliser notre fonction , la possibilité de la réutiliser sur d’autres jeux de données.
+Dabord, nous avons créer une fonction que nous avons nommé graphique par affectation.Cette fonction a été définie par la fonction function qui a pris comme argument"variable" qui est à renseigner lorsque on convoque notre fonction graphique.
+Comme description de la fonction: nous  avons d'abord présenter les effectifs(ni)à l'aide de la fonction table et nous l'avons réutiliser pour resortir les fréquences(fi) en appliquant effectif/effectif_total
+Nous avons par la suite créer un graphique avec la fonction barplot qui a pour argument :la fréquence,la couleur(nous avons opter pour la couleur bleue)et bordure(nous n'avons pas pris de bordure)
+
+Pour ressortir un graphique pour une variable de la base on a à faire appel à la base par la fonction attach et convoquer notre fonction graphique() et introduire la variable en question comme argument de la fonction
+
+A la fin nous faisons ressortir les graphiques de repartition des PME suivant les différentes variables	le sexe, le niveau d’instruction,le statut juridique,le propriétaire/locataire.
+
+
+## 2.5 Création d'une fonction biivarie() pour plusieurs variables
+
+
+```{r}
+
+##création d'une fonction biivarie( pour des statistiques descriptives bivariées) pour ressortir un tableau croisé de la repartition des PME suivant les différentes variables que j'aurai à croisé /tableau de contingence
+
+##création d'une fonction bivarie() pour plusieurs variables
+
+## code de ma fonction bivarie 
+
+attach(projet)
+tab_croise <-function(var1,var2){
+tableau_contingence <- table(var1, var2)
+return(tableau_contingence)
+}
+
+# présentation des differents tableaux croisés
+
+tab_croise(q12,sexe)# pour statut juridique et le sexe
+
+tab_croise(q25 ,sexe)# pour le niveau d’instruction et le sexe
+
+tab_croise(q81,sexe)# pour Propriétaire/locataire suivant le sexe
+
+
+```
+
+## 2.6 pour ressortir un tableau de contingence des PME suivant les différentes variables que j'aurai à croiser
+
+Pour que notre fonction soit le plus générale possible, nous avons choisis des appellations intuitives qui pourront guider un utilisateur donné qui voudrait utiliser notre fonction , la possibilité de la réutiliser sur d’autres jeux de données.
+Dabord, nous avons créer une fonction que nous avons nommé tab_croise par affectation.Cette fonction a été définie par la fonction function qui a pris comme argument"var1etvar2" (deux variables de la base que nous désirons croiser )qui sont à renseigner lorsque l'on convoque notre fonction tab_croise
+Comme description de notre fonction: nous  avons d'abord créer un tabeau croisé qui présente les effectifs à l'aide de la fonction table et ensuite 
+nous avons demander à la fonction de nous retourner cet tableau croisé créé.
+
+Pour ressortir un tableau croisé pour deux variables de la base on a à faire appel à la base par la fonction attach et convoquer notre fonction tab_croise() et introduire les deux variables en question comme arguments de la fonction
+
+A la fin nous faisons ressortir les tableaux de contingence des PME suivant : le statut juridique et le sexe,le niveau d’instruction et le sexe, et	Propriétaire/locataire suivant le sexe.
+
+```{r}
+
+```
+ 
+# 2.7 Commentaire général de l'analyse descriptive 
+
+A l'issu de nos différentes sorties présentées plus haut,il ressort des tableaux de repartition que les PME sont principalement dirigées par des femmes, . En ce qui concerne la propriété ou la location, une forte majorité des PME sont des propriétaires (90.4%) . La répartition suivant le niveau d'instruction du dirigeant montre que 31.6 % des dirigeant ont aucun niveau , 22.4% ont le niveau primaire,29.6% le Niveau secondaire et moins de dirigeant de PME ont le niveau Superieur soit 16.4%. Pour le statut juridique, on remarque une prédominance significative des GIE, représentant 71.6% des PME. En revanche, on observe une faible présence de PME ayant le statut de SA, SAR ,SUARL et Association.
+Parmi les 250 PME, 175 sont à la fois dirigées par des femmes et propriétaires, tandis que seulement 16 PME sont locataires et dirigées par des femmes.
+Sur 250 PME nous remarquons qu'il ya plus de dirigeants ayant un niveau supérieur que de dirigeantes à ce niveau d'instruction soit  24 Hommes et 17 femmes 
+Par contre dans les niveaux d'instruction plus bas les femmes sont plus majoritaire (70 avec aucun niveau, 48 avec le niveau primaire et 56 avec le niveau secondaire).
+Concernant le statut juridique, il est notable que la majorité des PME GIE sont dirigées par des femmes, soit 149 sur 179 PME GIE. En revanche, les PME ayant le statut juridique de SA ou SARL ont plus d'hommes dirigeants que de femmes dirigeantes
+
+
+## 2.8 Les statistiques descriptives de notre choix sur les autres variables
+
+Dans cette partie ou le choix des variables nous est laissé , nous allons	Prioriser une analyse par filière
+et	utiliser également des variables sur les dates comme le suggère l'etude
+Ainsi, à cette etape,nous proposons de faire resortir la repartition des PME suivant les différentes filières et suivant la date de début de l’enrégistrement des informations de la PME par l’enquêteur et suivant la date de l’enquête
+
+
+```{r}
+# Pour ressortir les effectifs des PME etant ou n'étant pas dans les différentes filière
+attach(projet)
+effectif <- function(variable) {
+ni <- table(variable)
+return(ni)
+}
+# Les effectifs des  differents PME suivant leur appartenace à la filière
+
+effectif(filiere_1)# la PME est dans la filière arachide
+effectif(filiere_2)# si la PME est dans la filière anacarde
+effectif(filiere_3)# si la PME est dans la filière mangue • 
+effectif(filiere_4)# si la PME est dans la filière riz
+
+```
+
+## 2.9 Commentaire sur les effectifs des  differents PME suivant leur appartenace à la filière
+
+cette sortie montre qu'il ya plus de PME  n'appartennant pas à la filière_2(la filiere anacarde), suivi de la filiere mangue soit 161 PME .La majorité des PME n'appartiennent pas à la filiere anacarde. Parcontre, les PME sont plus nombreuses dans la filiere_1 c'est à dire la filière arachide ( soit 108 PME)
+
+
+```{r}
+# Pour ressortir les effectifs des PME suivant la date de l’enquête 
+attach(projet)
+#creation d'une fonction nommée eff
+eff <- function(variable) {
+ni <- table(variable)
+return(ni)
+}
+# Les effectifs des differents PME suivant une date donnée
+
+eff(start) # la date de début de l’enrégistrement des informations de la PME par l’enquêteur
+
+eff(today)# la date de l’enquête
+
+```
+
+
+## 2.10 Commentaire sur les deux sorties des effectifs des differents PME suivant  la date de début de l’enrégistrement des informations de la PME par l’enquêteur et suivant la date de l’enquête
+
+ D'apres notre sortie,la variable start est unimodale.En effet la date de début de l’enrégistrement des informations de la PME par l’enquêteur est différente d'une PME à une autre en raison de la notion de différence d'heure qui y intervient
+ Quant à la date de l’enquête, notre sortie a révélé que le 2021-06-07, 37 PME ont été enquétés.A cette date le nombre de PME enquété etait plus élevé soit 37 sur 250 PME suivi de la date du 2021-06-11 avec 30 PME enquétés sur 250.
+ Aux dates 2021-05-06,2021-05-28,2021-05-29,2021-06-18 et 2021-06-20 respectivement une PME a été enquéte.
+ 
+ 
+ 
+ 
+ 
+ 
+ 
